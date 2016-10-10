@@ -12,10 +12,10 @@ import (
 // ReadDir reads the directory named by dirname and returns a list of sorted
 // directory entries.
 func (c *Client) ReadDir(dirname string) ([]os.FileInfo, error) {
-	return c.getDirList(dirname, "", 0)
+	return c.GetDirList(dirname, "", 0)
 }
 
-func (c *Client) getDirList(dirname string, after string, max int) ([]os.FileInfo, error) {
+func (c *Client) GetDirList(dirname string, after string, max int) ([]os.FileInfo, error) {
 	var res []os.FileInfo
 	last := after
 	for max <= 0 || len(res) < max {

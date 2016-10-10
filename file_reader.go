@@ -229,7 +229,7 @@ func (f *FileReader) Readdir(n int) ([]os.FileInfo, error) {
 		f.readdirLast = ""
 	}
 
-	res, err := f.client.getDirList(f.name, f.readdirLast, n)
+	res, err := f.client.GetDirList(f.name, f.readdirLast, n)
 	if err != nil {
 		return res, err
 	}
