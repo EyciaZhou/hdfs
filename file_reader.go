@@ -10,6 +10,7 @@ import (
 	hdfs "github.com/colinmarc/hdfs/protocol/hadoop_hdfs"
 	"github.com/colinmarc/hdfs/rpc"
 	"github.com/golang/protobuf/proto"
+	"gs.baishancloud.com/zhou.eycia/utils/slack"
 )
 
 // A FileReader represents an existing file or directory in HDFS. It implements
@@ -170,6 +171,13 @@ func (f *FileReader) Read(b []byte) (int, error) {
 	for {
 		n, err := f.blockReader.Read(b)
 		f.offset += int64(n)
+		
+		if f.offset > f.info.Size() {
+			slack.Error(fmt.Sprintf("[%s] file size not match between namenode and datanode, skipping excess part", f.name))
+			
+			n -= int(f.offset - f.info.Size())
+			f.offset = f.info.Size()
+		}
 
 		if err != nil && err != io.EOF {
 			f.blockReader.Close()
