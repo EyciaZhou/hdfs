@@ -9,10 +9,11 @@ import (
 	"github.com/pborman/getopt"
 )
 
-// TODO: cp, df, tree, test, trash
+// TODO: cp, tree, test, trash
 
 var (
-	usage = fmt.Sprintf(`Usage: %s COMMAND
+	version string
+	usage   = fmt.Sprintf(`Usage: %s COMMAND
 The flags available are a subset of the POSIX ones, but should behave similarly.
 
 Valid commands:
@@ -31,6 +32,7 @@ Valid commands:
   get SOURCE [DEST]
   getmerge SOURCE DEST
   put SOURCE DEST
+  df [-h]
 `, os.Args[0])
 
 	lsOpts = getopt.New()
@@ -69,6 +71,9 @@ Valid commands:
 	getmergeOpts = getopt.New()
 	getmergen    = getmergeOpts.Bool('n')
 
+	dfOpts = getopt.New()
+	dfh    = dfOpts.Bool('h')
+
 	cachedClient *hdfs.Client
 	status       = 0
 )
@@ -83,6 +88,7 @@ func init() {
 	headTailOpts.SetUsage(printHelp)
 	duOpts.SetUsage(printHelp)
 	getmergeOpts.SetUsage(printHelp)
+	dfOpts.SetUsage(printHelp)
 }
 
 func main() {
@@ -93,6 +99,8 @@ func main() {
 	command := os.Args[1]
 	argv := os.Args[1:]
 	switch command {
+	case "-v", "--version":
+		fatal("gohdfs version", version)
 	case "ls":
 		lsOpts.Parse(argv)
 		ls(lsOpts.Args(), *lsl, *lsa, *lsh)
@@ -131,6 +139,9 @@ func main() {
 		getmerge(getmergeOpts.Args(), *getmergen)
 	case "put":
 		put(argv[1:])
+	case "df":
+		dfOpts.Parse(argv)
+		df(*dfh)
 	// it's a seeeeecret command
 	case "complete":
 		complete(argv)
@@ -167,8 +178,8 @@ func getClient(namenode string) (*hdfs.Client, error) {
 		namenode = os.Getenv("HADOOP_NAMENODE")
 	}
 
-	if namenode == "" {
-		return nil, errors.New("Couldn't find a namenode to connect to. You should specify hdfs://<namenode>:<port> in your paths, or set HADOOP_NAMENODE in your environment.")
+	if namenode == "" && os.Getenv("HADOOP_CONF_DIR") == "" {
+		return nil, errors.New("Couldn't find a namenode to connect to. You should specify hdfs://<namenode>:<port> in your paths. Alternatively, set HADOOP_NAMENODE or HADOOP_CONF_DIR in your environment.")
 	}
 
 	c, err := hdfs.New(namenode)
